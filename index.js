@@ -22,8 +22,11 @@ async function run() {
         await client.connect();
         const taskCollection = client.db('todo_app').collection('tasks')
 
-        app.get('/task', async (req, res) => {
-            res.send('todo app connected to mongo db')
+        app.get('/task/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = {email:email};
+            const tasks = await taskCollection.find(query).toArray()
+            res.send(tasks)
         })
 
         app.post('/task', async (req, res) => {
