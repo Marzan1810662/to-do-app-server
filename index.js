@@ -16,14 +16,14 @@ app.use(express.json())
 function verifyJWT(req, res, next) {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
-        return res.status(401).send({ message: 'unauthorized access' });
+        return res.status(401).send([{ message: 'unauthorized access' }]);
     }
     const token = authHeader.split(' ')[1];
 
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET,
         function (err, decoded) {
             if (err) {
-                return res.status(403).send({ message: 'forbidden access' });
+                return res.status(403).send([{ message: 'forbidden access' }]);
             }
             req.decoded = decoded;
             next();
@@ -38,7 +38,7 @@ async function run() {
     try {
         await client.connect();
         const taskCollection = client.db('todo_app').collection('tasks')
-        
+
         app.post('/token', async (req, res) => {
             const user = req.body;
             const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
@@ -49,9 +49,14 @@ async function run() {
 
         app.get('/task/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
+            const decodedEmail = req.decoded.email;
+            if(email === decodedEmail){
             const query = { email: email };
             const tasks = await taskCollection.find(query).toArray()
-            res.send(tasks)
+            res.send(tasks)}
+            else{
+                return res.status(403).send([{ message: 'forbidden access' }]);
+            }
         })
 
         app.post('/task', async (req, res) => {
